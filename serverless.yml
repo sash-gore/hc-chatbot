@@ -1,0 +1,40 @@
+service: hc-chatbot
+
+frameworkVersion: "3"
+
+provider:
+  name: aws
+  runtime: python3.11
+  region: us-east-1
+  stage: ${opt:stage, 'dev'}
+  environment:
+    WHATSAPP_VERIFY_TOKEN: ${env:WHATSAPP_VERIFY_TOKEN}
+    WHATSAPP_ACCESS_TOKEN: ${env:WHATSAPP_ACCESS_TOKEN}
+    WHATSAPP_PHONE_NUMBER_ID: ${env:WHATSAPP_PHONE_NUMBER_ID}
+    MONGODB_URI: ${env:MONGODB_URI}
+    MONGODB_DB_NAME: ${env:MONGODB_DB_NAME}
+    ANALYTICS_API_URL: ${env:ANALYTICS_API_URL}
+    ANALYTICS_API_KEY: ${env:ANALYTICS_API_KEY}
+    STAGE: ${self:provider.stage}
+
+functions:
+  webhook:
+    handler: src/handlers/webhook.handler
+    events:
+      - http:
+          path: /webhook
+          method: get
+          cors: true
+      - http:
+          path: /webhook
+          method: post
+          cors: true
+    timeout: 30
+
+plugins:
+  - serverless-python-requirements
+
+custom:
+  pythonRequirements:
+    dockerizePip: non-linux
+    slim: true
