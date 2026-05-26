@@ -18,8 +18,10 @@ provider:
     STAGE: ${self:provider.stage}
 
 functions:
+  # ─── Lambda 1: Chatbot WhatsApp ───────────────────────────────────────────
   webhook:
     handler: src/handlers/webhook.handler
+    description: Recibe y procesa mensajes de WhatsApp via Meta Cloud API
     events:
       - http:
           path: /webhook
@@ -30,6 +32,44 @@ functions:
           method: post
           cors: true
     timeout: 30
+
+  # ─── Lambda 2: Dashboard y reportes ──────────────────────────────────────
+  dashboard:
+    handler: src/handlers/dashboard.handler
+    description: KPIs, historial de conversaciones y filtros para el panel admin
+    events:
+      - http:
+          path: /dashboard/stats
+          method: get
+          cors: true
+      - http:
+          path: /dashboard/conversations
+          method: get
+          cors: true
+      - http:
+          path: /dashboard/conversations/{userId}
+          method: get
+          cors: true
+    timeout: 30
+
+  # ─── Lambda 3: Carga de datos y envios masivos ────────────────────────────
+  campaigns:
+    handler: src/handlers/campaigns.handler
+    description: Carga de CSV/Excel de egresados y envio masivo de mensajes WhatsApp
+    events:
+      - http:
+          path: /campaigns/upload
+          method: post
+          cors: true
+      - http:
+          path: /campaigns/egresados
+          method: get
+          cors: true
+      - http:
+          path: /campaigns/send
+          method: post
+          cors: true
+    timeout: 60
 
 plugins:
   - serverless-offline

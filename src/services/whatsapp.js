@@ -66,4 +66,51 @@ const parseIncomingMessage = (body) => {
   }
 };
 
-module.exports = { sendMessage, parseIncomingMessage };
+/**
+ * Envia un mensaje usando una plantilla aprobada por Meta (para envios masivos).
+ * params: Array de strings con los valores de los parametros de la plantilla.
+ *
+ * Ejemplo de plantilla con 1 parametro:
+ *   templateName: 'recordatorio_evento'
+ *   params: ['Nombre del evento']
+ */
+const sendTemplateMessage = async (phoneNumber, templateName, templateLanguage = 'es', params = []) => {
+  const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
+  const accessToken = process.env.WHATSAPP_ACCESS_TOKEN;
+
+  const url = `${WHATSAPP_API_URL}/${phoneNumberId}/messages`;
+  const headers = {
+    Authorization: `Bearer ${accessToken}`,
+    'Content-Type': 'application/json',
+  };
+
+  const components = params.length
+    ? [{
+        type: 'body',
+        parameters: params.map(p => ({ type: 'text', text: String(p) })),
+      }]
+    : [];
+
+  const payload = {
+    messaging_product: 'whatsapp',
+    to: phoneNumber,
+    type: 'template',
+    template: {
+      name: templateName,
+      language: { code: templateLanguage },
+      components,
+    },
+  };
+
+  try {
+    await axios.post(url, payload, { headers, timeout: 10000 });
+    console.info(`Plantilla '${templateName}' enviada a ${phoneNumber}`);
+    return true;
+  } catch (err) {
+    const detail = err.response?.data?.error?.message || err.message;
+    console.error(`Error enviando plantilla a ${phoneNumber}:`, detail);
+    throw new Error(detail);
+  }
+};
+
+module.exports = { sendMessage, parseIncomingMessage, sendTemplateMessage };
